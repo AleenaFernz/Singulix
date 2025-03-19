@@ -51,6 +51,8 @@ def login(user: UserAuth):
 
     try:
         user_email = user.email.strip()
+        
+        # Supabase login request
         response = supabase.auth.sign_in_with_password({
             "email": user_email,
             "password": user.password
@@ -58,14 +60,19 @@ def login(user: UserAuth):
 
         print("Supabase Response:", response)  # Debugging
 
-        if "error" in response and response["error"]:
-            print("Supabase Error:", response["error"])
-            raise HTTPException(status_code=400, detail=response["error"]["message"])
+        # Convert response to a dictionary
+        response_dict = response.__dict__
 
-        if not response.get("session"):
+        # If Supabase returns an error
+        if hasattr(response, "error") and response.error:
+            print("Supabase Error:", response.error)
+            raise HTTPException(status_code=400, detail=response.error.get("message", "Invalid login credentials."))
+
+        # Ensure session exists
+        if not hasattr(response, "session") or not response.session:
             raise HTTPException(status_code=500, detail="Login failed, no session returned.")
 
-        return {"message": "Login successful!", "token": response["session"]["access_token"]}
+        return {"message": "Login successful!", "token": response.session.access_token}
 
     except Exception as e:
         print("Login error:", str(e))  # Debugging
