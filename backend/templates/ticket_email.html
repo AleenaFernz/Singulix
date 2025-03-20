@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .ticket-details {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 30px;
+        }
+        .qr-code {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .qr-code img {
+            max-width: 200px;
+            height: auto;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 12px;
+            color: #666;
+        }
+        .important {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Your Event Ticket</h1>
+        <p>Thank you for registering for {{ event.title }}</p>
+    </div>
+
+    <div class="ticket-details">
+        <h2>Event Details</h2>
+        <p><strong>Event:</strong> {{ event.title }}</p>
+        <p><strong>Date:</strong> {{ event.start_date.strftime('%B %d, %Y') }}</p>
+        <p><strong>Time Slot:</strong> {{ time_slot.start_time.strftime('%I:%M %p') }} - {{ time_slot.end_time.strftime('%I:%M %p') }}</p>
+        <p><strong>Venue:</strong> {{ event.venue_id }}</p>
+        {% if ticket.dietary_restrictions %}
+        <p><strong>Dietary Restrictions:</strong> {{ ticket.dietary_restrictions|join(', ') }}</p>
+        {% endif %}
+    </div>
+
+    <div class="qr-code">
+        <h3>Your QR Code</h3>
+        <p class="important">Please present this QR code at the event entrance</p>
+        <img src="data:image/png;base64,{{ qr_code }}" alt="Ticket QR Code">
+    </div>
+
+    <div class="important">
+        <p>Important Information:</p>
+        <ul>
+            <li>Please arrive 15 minutes before your scheduled time slot</li>
+            <li>Bring a valid ID for verification</li>
+            <li>This QR code is unique to your ticket and cannot be shared</li>
+            {% if event.age_restriction_min or event.age_restriction_max %}
+            <li>Age restrictions apply: {{ event.age_restriction_min }}-{{ event.age_restriction_max }} years</li>
+            {% endif %}
+            {% if event.gender_restriction %}
+            <li>Gender restriction: {{ event.gender_restriction }}</li>
+            {% endif %}
+        </ul>
+    </div>
+
+    <div class="footer">
+        <p>If you have any questions, please contact the event organizer</p>
+        <p>This is an automated message, please do not reply to this email</p>
+    </div>
+</body>
+</html> 
