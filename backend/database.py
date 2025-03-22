@@ -2,15 +2,54 @@ from supabase import create_client, Client
 from typing import Optional, List, Dict, Any
 import os
 from datetime import datetime
-from .models import *
+from models import *
+from passlib.context import CryptContext
+from dotenv import load_dotenv
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+load_dotenv()
 
 class Database:
     def __init__(self):
-        supabase_url = os.getenv("SUPABASE_URL")
-        supabase_key = os.getenv("SUPABASE_KEY")
-        if not supabase_url or not supabase_key:
-            raise ValueError("Supabase credentials not found in environment variables")
-        self.supabase: Client = create_client(supabase_url, supabase_key)
+        self.supabase: Client = create_client(
+            os.getenv("SUPABASE_URL"),
+            os.getenv("SUPABASE_KEY")
+        )
+
+    # User operations
+    async def create_user(self, email: str, password: str) -> User:
+        # Check if user already exists
+        result = self.supabase.table("users").select("*").eq("email", email).execute()
+        if result.data:
+            raise ValueError("User with this email already exists")
+
+        # Hash password
+        hashed_password = pwd_context.hash(password)
+        
+        # Create user
+        data = {
+            "email": email,
+            "password": hashed_password,
+            "created_at": datetime.utcnow().isoformat(),
+            "updated_at": datetime.utcnow().isoformat()
+        }
+        result = self.supabase.table("users").insert(data).execute()
+        return User(**result.data[0])
+
+    async def authenticate_user(self, email: str, password: str) -> Optional[User]:
+        # Get user
+        result = self.supabase.table("users").select("*").eq("email", email).execute()
+        if not result.data:
+            raise ValueError("User not found")
+
+        user = User(**result.data[0])
+        
+        # Verify password
+        if not pwd_context.verify(password, user.password):
+            raise ValueError("Invalid password")
+
+        return user
 
     # Venue operations
     async def create_venue(self, venue: VenueCreate) -> Venue:
@@ -27,15 +66,29 @@ class Database:
         return [Venue(**venue) for venue in result.data]
 
     # Event operations
-    async def create_event(self, event: EventCreate, organizer_id: str) -> Event:
-        data = event.dict()
-        data["organizer_id"] = organizer_id
-        result = self.supabase.table("events").insert(data).execute()
-        return Event(**result.data[0])
+    async def create_event(self, event: EventCreate, user_id: str) -> Event:
+        try:
+            result = self.supabase.table('events').insert({
+                'title': event.title,
+                'description': event.description,
+                'location': event.location,
+                'organizer_id': user_id,
+                'max_tickets': event.max_tickets,
+                'price': event.price
+            }).execute()
+            
+            return Event(**result.data[0])
+        except Exception as e:
+            raise Exception(f"Error creating event: {str(e)}")
 
     async def get_event(self, event_id: str) -> Optional[Event]:
-        result = self.supabase.table("events").select("*").eq("id", event_id).execute()
-        return Event(**result.data[0]) if result.data else None
+        try:
+            result = self.supabase.table('events').select('*').eq('id', event_id).execute()
+            if not result.data:
+                return None
+            return Event(**result.data[0])
+        except Exception as e:
+            raise Exception(f"Error getting event: {str(e)}")
 
     async def list_events(self, organizer_id: Optional[str] = None) -> List[Event]:
         query = self.supabase.table("events").select("*")
@@ -60,15 +113,26 @@ class Database:
 
     # Ticket operations
     async def create_ticket(self, ticket: TicketCreate, user_id: str, qr_code: str) -> Ticket:
-        data = ticket.dict()
-        data["user_id"] = user_id
-        data["qr_code"] = qr_code
-        result = self.supabase.table("tickets").insert(data).execute()
-        return Ticket(**result.data[0])
+        try:
+            result = self.supabase.table('tickets').insert({
+                'event_id': ticket.event_id,
+                'time_slot_id': ticket.time_slot_id,
+                'user_id': user_id,
+                'qr_code': qr_code
+            }).execute()
+            
+            return Ticket(**result.data[0])
+        except Exception as e:
+            raise Exception(f"Error creating ticket: {str(e)}")
 
     async def get_ticket(self, ticket_id: str) -> Optional[Ticket]:
-        result = self.supabase.table("tickets").select("*").eq("id", ticket_id).execute()
-        return Ticket(**result.data[0]) if result.data else None
+        try:
+            result = self.supabase.table('tickets').select('*').eq('id', ticket_id).execute()
+            if not result.data:
+                return None
+            return Ticket(**result.data[0])
+        except Exception as e:
+            raise Exception(f"Error getting ticket: {str(e)}")
 
     async def validate_ticket(self, qr_code: str) -> Optional[Ticket]:
         result = self.supabase.table("tickets").select("*").eq("qr_code", qr_code).execute()

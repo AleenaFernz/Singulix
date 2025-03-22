@@ -2,6 +2,14 @@ from datetime import datetime
 from typing import Optional, List
 from pydantic import BaseModel, EmailStr, Field
 from enum import Enum
+from uuid import UUID
+
+class User(BaseModel):
+    id: str
+    email: str
+    password: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
 
 class UserRole(str, Enum):
     ADMIN = "admin"
@@ -43,34 +51,41 @@ class TimeSlot(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
-class Event(BaseModel):
-    id: str
+class EventBase(BaseModel):
     title: str
     description: str
-    organizer_id: str
-    venue_id: str
-    start_date: datetime
-    end_date: datetime
-    status: EventStatus = EventStatus.DRAFT
-    max_attendees: int
-    max_tickets_per_user: int = 1
-    age_restriction: Optional[tuple[int, int]] = None  # (min_age, max_age)
-    gender_restriction: Optional[str] = None
-    dietary_restrictions: List[DietaryRestriction] = []
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    location: str
+    max_tickets: int
+    price: float
 
-class Ticket(BaseModel):
-    id: str
-    event_id: str
+class EventCreate(EventBase):
+    pass
+
+class Event(EventBase):
+    id: UUID
+    organizer_id: str
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class TicketBase(BaseModel):
+    event_id: UUID
+    time_slot_id: Optional[UUID]
+
+class TicketCreate(TicketBase):
+    pass
+
+class Ticket(TicketBase):
+    id: UUID
     user_id: str
-    time_slot_id: str
     qr_code: str
-    is_valid: bool = True
-    entry_time: Optional[datetime] = None
-    dietary_restrictions: List[DietaryRestriction] = []
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
 
 class TeamMember(BaseModel):
     id: str
@@ -97,28 +112,11 @@ class Alert(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     resolved_at: Optional[datetime] = None
 
-class EventCreate(BaseModel):
-    title: str
-    description: str
-    venue_id: str
-    start_date: datetime
-    end_date: datetime
-    max_attendees: int
-    max_tickets_per_user: int = 1
-    age_restriction: Optional[tuple[int, int]] = None
-    gender_restriction: Optional[str] = None
-    dietary_restrictions: List[DietaryRestriction] = []
-
 class TimeSlotCreate(BaseModel):
     event_id: str
     start_time: datetime
     end_time: datetime
     capacity: int
-
-class TicketCreate(BaseModel):
-    event_id: str
-    time_slot_id: str
-    dietary_restrictions: List[DietaryRestriction] = []
 
 class TeamMemberCreate(BaseModel):
     event_id: str

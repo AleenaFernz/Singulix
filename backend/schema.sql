@@ -89,6 +89,15 @@ CREATE TABLE alerts (
     resolved_at TIMESTAMP WITH TIME ZONE
 );
 
+-- Create users table
+CREATE TABLE IF NOT EXISTS users (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    email TEXT UNIQUE NOT NULL,
+    password TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Create indexes for better query performance
 CREATE INDEX idx_events_organizer ON events(organizer_id);
 CREATE INDEX idx_events_venue ON events(venue_id);
@@ -252,4 +261,22 @@ CREATE POLICY "Alerts are insertable by event team"
             WHERE team_members.event_id = alerts.event_id
             AND team_members.user_id = auth.uid()
         )
-    ); 
+    );
+
+-- Enable Row Level Security
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+
+-- Create policy to allow users to read their own data
+CREATE POLICY users_read_own ON users
+    FOR SELECT
+    USING (auth.uid() = id);
+
+-- Create policy to allow users to update their own data
+CREATE POLICY users_update_own ON users
+    FOR UPDATE
+    USING (auth.uid() = id);
+
+-- Create policy to allow signup
+CREATE POLICY users_insert_all ON users
+    FOR INSERT
+    WITH CHECK (true); 
