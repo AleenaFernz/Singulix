@@ -1,83 +1,214 @@
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from config import supabase
+from fastapi import FastAPI, HTTPException, Depends, status
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from datetime import datetime, timedelta
+from typing import Optional, List
+import os
+from dotenv import load_dotenv
+import qrcode
+import io
+import base64
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import aiosmtplib
+from jinja2 import Environment, FileSystemLoader
+import json
 
-app = FastAPI()
+from models import *
+from database import Database
 
-class UserAuth(BaseModel):
-    email: str
-    password: str
+# Load environment variables
+load_dotenv()
 
-@app.post("/signup")
-def signup(user: UserAuth):
-    """Registers a new user with Supabase authentication."""
-    print("Received signup request:", user.email)
+app = FastAPI(title="Singulix API")
 
-    try:
-        user_email = user.email.strip()
-        print("Formatted Email:", user_email)  # Debugging
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-        # Supabase signup request
-        response = supabase.auth.sign_up({
-            "email": user_email,
-            "password": user.password
-        })
+# Initialize database
+db = Database()
 
-        print("Supabase Response:", response)  # Debugging
+# OAuth2 scheme for token authentication
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-        # Convert response to a dictionary
-        response_dict = response.__dict__
+# Email configuration
+SMTP_HOST = os.getenv("SMTP_HOST")
+SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
+SMTP_USER = os.getenv("SMTP_USER")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
 
-        # If Supabase returns an error
-        if response_dict.get("error"):
-            print("Supabase Error:", response_dict["error"])
-            raise HTTPException(status_code=400, detail=response_dict["error"].get("message", "Signup failed."))
+# Initialize Jinja2 environment for email templates
+env = Environment(loader=FileSystemLoader("templates"))
 
-        # Ensure the user object exists
-        if not response_dict.get("user"):
-            raise HTTPException(status_code=500, detail="User registration failed in Supabase.")
+async def send_email(to_email: str, subject: str, template_name: str, context: dict):
+    """Send email using SMTP"""
+    template = env.get_template(template_name)
+    html_content = template.render(**context)
+    
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"] = SMTP_USER
+    msg["To"] = to_email
+    
+    msg.attach(MIMEText(html_content, "html"))
+    
+    await aiosmtplib.send(
+        msg,
+        hostname=SMTP_HOST,
+        port=SMTP_PORT,
+        username=SMTP_USER,
+        password=SMTP_PASSWORD,
+        use_tls=True
+    )
 
-        return {"message": "User registered successfully!", "user": response_dict["user"]}
+def generate_qr_code(data: str) -> str:
+    """Generate QR code and return base64 encoded image"""
+    qr = qrcode.QRCode(version=1, box_size=10, border=5)
+    qr.add_data(data)
+    qr.make(fit=True)
+    
+    img = qr.make_image(fill_color="black", back_color="white")
+    buffered = io.BytesIO()
+    img.save(buffered, format="PNG")
+    return base64.b64encode(buffered.getvalue()).decode()
 
-    except Exception as e:
-        print("Signup error:", str(e))  # Debugging
-        raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
+# Venue routes
+@app.post("/venues", response_model=Venue)
+async def create_venue(venue: VenueCreate):
+    return await db.create_venue(venue)
 
+@app.get("/venues", response_model=List[Venue])
+async def list_venues():
+    return await db.list_venues()
 
-@app.post("/login")
-def login(user: UserAuth):
-    """Authenticates a user and returns JWT token."""
-    print("Login attempt for:", user.email)
+@app.get("/venues/{venue_id}", response_model=Venue)
+async def get_venue(venue_id: str):
+    venue = await db.get_venue(venue_id)
+    if not venue:
+        raise HTTPException(status_code=404, detail="Venue not found")
+    return venue
 
-    try:
-        user_email = user.email.strip()
-        
-        # Supabase login request
-        response = supabase.auth.sign_in_with_password({
-            "email": user_email,
-            "password": user.password
-        })
+# Event routes
+@app.post("/events", response_model=Event)
+async def create_event(event: EventCreate, current_user: dict = Depends(oauth2_scheme)):
+    return await db.create_event(event, current_user["sub"])
 
-        print("Supabase Response:", response)  # Debugging
+@app.get("/events", response_model=List[Event])
+async def list_events(organizer_id: Optional[str] = None):
+    return await db.list_events(organizer_id)
 
-        # Convert response to a dictionary
-        response_dict = response.__dict__
+@app.get("/events/{event_id}", response_model=Event)
+async def get_event(event_id: str):
+    event = await db.get_event(event_id)
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+    return event
 
-        # If Supabase returns an error
-        if hasattr(response, "error") and response.error:
-            print("Supabase Error:", response.error)
-            raise HTTPException(status_code=400, detail=response.error.get("message", "Invalid login credentials."))
+# Time slot routes
+@app.post("/time-slots", response_model=TimeSlot)
+async def create_time_slot(time_slot: TimeSlotCreate):
+    return await db.create_time_slot(time_slot)
 
-        # Ensure session exists
-        if not hasattr(response, "session") or not response.session:
-            raise HTTPException(status_code=500, detail="Login failed, no session returned.")
+@app.get("/time-slots/{event_id}", response_model=List[TimeSlot])
+async def list_time_slots(event_id: str):
+    return await db.list_time_slots(event_id)
 
-        return {"message": "Login successful!", "token": response.session.access_token}
+# Ticket routes
+@app.post("/tickets", response_model=Ticket)
+async def create_ticket(ticket: TicketCreate, current_user: dict = Depends(oauth2_scheme)):
+    # Generate QR code
+    qr_data = {
+        "ticket_id": str(ticket.id),
+        "event_id": ticket.event_id,
+        "time_slot_id": ticket.time_slot_id,
+        "user_id": current_user["sub"]
+    }
+    qr_code = generate_qr_code(json.dumps(qr_data))
+    
+    # Create ticket
+    ticket_obj = await db.create_ticket(ticket, current_user["sub"], qr_code)
+    
+    # Send email with ticket details
+    event = await db.get_event(ticket.event_id)
+    time_slot = await db.get_time_slot(ticket.time_slot_id)
+    
+    await send_email(
+        current_user["email"],
+        "Your Event Ticket",
+        "ticket_email.html",
+        {
+            "event": event,
+            "time_slot": time_slot,
+            "ticket": ticket_obj,
+            "qr_code": qr_code
+        }
+    )
+    
+    return ticket_obj
 
-    except Exception as e:
-        print("Login error:", str(e))  # Debugging
-        raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
+@app.get("/tickets/{ticket_id}", response_model=Ticket)
+async def get_ticket(ticket_id: str, current_user: dict = Depends(oauth2_scheme)):
+    ticket = await db.get_ticket(ticket_id)
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    if ticket.user_id != current_user["sub"]:
+        raise HTTPException(status_code=403, detail="Not authorized to view this ticket")
+    return ticket
 
-@app.get("/")
-def home():
-    return {"message": "Welcome to Singulix Backend!"}
+@app.post("/tickets/validate/{qr_code}", response_model=Ticket)
+async def validate_ticket(qr_code: str):
+    ticket = await db.validate_ticket(qr_code)
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Invalid ticket")
+    if not ticket.is_valid:
+        raise HTTPException(status_code=400, detail="Ticket is not valid")
+    return ticket
+
+# Team member routes
+@app.post("/team", response_model=TeamMember)
+async def add_team_member(team_member: TeamMemberCreate):
+    return await db.add_team_member(team_member)
+
+@app.get("/team/{event_id}", response_model=List[TeamMember])
+async def get_team_members(event_id: str):
+    return await db.get_team_members(event_id)
+
+# Crowd data routes
+@app.post("/crowd-data")
+async def record_crowd_data(event_id: str, venue_id: str, current_count: int):
+    crowd_data = await db.record_crowd_data(event_id, venue_id, current_count)
+    
+    # Check if crowd count exceeds threshold
+    venue = await db.get_venue(venue_id)
+    if current_count > venue.capacity * 0.8:  # 80% threshold
+        await db.create_alert(
+            event_id,
+            "crowd_threshold",
+            f"Crowd count ({current_count}) exceeds 80% of venue capacity ({venue.capacity})",
+            "high"
+        )
+    
+    return crowd_data
+
+@app.get("/crowd-data/{event_id}/{venue_id}")
+async def get_crowd_data(event_id: str, venue_id: str):
+    return await db.get_crowd_data(event_id, venue_id)
+
+# Alert routes
+@app.get("/alerts/{event_id}")
+async def get_alerts(event_id: str, resolved: Optional[bool] = None):
+    return await db.get_alerts(event_id, resolved)
+
+@app.post("/alerts/{alert_id}/resolve")
+async def resolve_alert(alert_id: str):
+    return await db.resolve_alert(alert_id)
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
