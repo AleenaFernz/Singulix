@@ -3,57 +3,66 @@ import {
   BrowserRouter as Router,
   Routes,
   Route,
-  useNavigate,
+  Navigate,
 } from "react-router-dom";
-import { ThemeProvider, createTheme, CssBaseline } from "@mui/material";
 import "./App.css";
+
 import LandingPage from "./components/LandingPage/LandingPage";
-import { LoginForm } from "./components/Auth/LoginForm";
-import { SignupForm } from "./components/Auth/SignupForm";
+import Login from "./components/LogInPage/Login";
+import SignUp from "./components/SignUpPage/SignUp";
+import AdminDashboard from "./components/AdminDashboard/AdminDashboard";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 
-// Create a theme instance
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: "#4a90e2",
-    },
-    background: {
-      default: "#f5f5f5",
-    },
-  },
-});
-
-// Wrapper components to handle navigation after successful auth
-const LoginFormWrapper = () => {
-  const navigate = useNavigate();
-  return <LoginForm onSuccess={() => navigate("/dashboard")} />;
+// 🔒 Protected Route Component
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated } = useAuth();
+  return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
 };
 
-const SignupFormWrapper = () => {
-  const navigate = useNavigate();
-  return <SignupForm onSuccess={() => navigate("/dashboard")} />;
+// 🔑 Admin Route Component (role check can be added later)
+const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated } = useAuth();
+  return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
 };
 
-function App() {
+const App: React.FC = () => {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Router>
-        <div className="App">
+    <Router>
+      <AuthProvider>
+        <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
           <Routes>
+            {/* Public Routes */}
             <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<LoginFormWrapper />} />
-            <Route path="/signup" element={<SignupFormWrapper />} />
-            {/* Add a temporary dashboard route */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<SignUp />} />
+
+            {/* Authenticated User Route */}
             <Route
               path="/dashboard"
-              element={<div>Dashboard (Coming Soon)</div>}
+              element={
+                <ProtectedRoute>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
             />
+
+            {/* Admin Role Route (optional) */}
+            <Route
+              path="/admin/*"
+              element={
+                <AdminRoute>
+                  <AdminDashboard />
+                </AdminRoute>
+              }
+            />
+
+            {/* Catch-all */}
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>
-      </Router>
-    </ThemeProvider>
+      </AuthProvider>
+    </Router>
   );
-}
+};
 
 export default App;
