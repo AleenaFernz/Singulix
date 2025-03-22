@@ -10,7 +10,7 @@ class UserAuth(BaseModel):
 
 @app.post("/signup")
 def signup(user: UserAuth):
-    """Registers a new user with Supabase authentication."""
+    """Registers a new user with Supabase authentication and assigns a default role."""
     print("Received signup request:", user.email)
 
     try:
@@ -37,11 +37,21 @@ def signup(user: UserAuth):
         if not response_dict.get("user"):
             raise HTTPException(status_code=500, detail="User registration failed in Supabase.")
 
-        return {"message": "User registered successfully!", "user": response_dict["user"]}
+        # Get user ID
+        user_id = response_dict["user"].id
+
+        # Assign default role as 'user' in Supabase metadata
+        update_response = supabase.table("users").update({"role": "user"}).eq("id", user_id).execute()
+        
+        print("Updated Role Response:", update_response)  # Debugging
+
+        return {"message": "User registered successfully with role 'user'!", "user": response_dict["user"]}
 
     except Exception as e:
         print("Signup error:", str(e))  # Debugging
         raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
+
+
 
 
 @app.post("/login")
