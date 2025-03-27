@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import "./ManageEvents.css";
 
 interface Event {
   id: string;
@@ -57,18 +58,16 @@ const ManageEvents: React.FC = () => {
   };
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
-          Manage Events
-        </h2>
-        <div className="flex gap-4">
+    <div className="manage-events-container">
+      <div className="manage-events-header">
+        <h2 className="manage-events-title">Manage Events</h2>
+        <div className="header-actions">
           <input
             type="text"
             placeholder="Search events..."
-            className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+            className="search-input"
           />
-          <select className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+          <select className="filter-select">
             <option value="">All Status</option>
             <option value="upcoming">Upcoming</option>
             <option value="ongoing">Ongoing</option>
@@ -78,76 +77,53 @@ const ManageEvents: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          <thead className="bg-gray-50 dark:bg-gray-700">
+      <div className="events-table-container">
+        <table className="events-table">
+          <thead>
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                Event
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                Date
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                Venue
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                Capacity
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                Status
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                Actions
-              </th>
+              <th>Event</th>
+              <th>Date</th>
+              <th>Venue</th>
+              <th>Capacity</th>
+              <th>Status</th>
+              <th>Actions</th>
             </tr>
           </thead>
-          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+          <tbody>
             {events.map((event) => (
               <tr key={event.id}>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900 dark:text-white">
+                <td>
+                  <div className="event-name">
                     {event.name}
-                  </div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
-                    {event.registered}/{event.capacity} registered
+                    <span className="event-registrations">
+                      {event.registered}/{event.capacity} registered
+                    </span>
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                  {event.date}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                  {event.venue}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900 dark:text-white">
-                    {event.capacity}
-                  </div>
-                  <div className="w-24 h-2 bg-gray-200 dark:bg-gray-700 rounded-full mt-1">
+                <td>{event.date}</td>
+                <td>{event.venue}</td>
+                <td>
+                  <div className="capacity-bar">
                     <div
-                      className="h-full bg-blue-600 rounded-full"
+                      className="capacity-fill"
                       style={{
                         width: `${(event.registered / event.capacity) * 100}%`,
                       }}
                     />
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span
-                    className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(
-                      event.status
-                    )}`}
-                  >
+                <td>
+                  <span className={`event-status status-${event.status}`}>
                     {event.status}
                   </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                  <button className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-3">
-                    Edit
-                  </button>
-                  <button className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">
-                    Delete
-                  </button>
+                <td>
+                  <div className="event-actions">
+                    <button className="action-button edit-button">Edit</button>
+                    <button className="action-button delete-button">
+                      Delete
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}

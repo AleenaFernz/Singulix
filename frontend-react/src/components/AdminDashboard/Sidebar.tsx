@@ -1,4 +1,5 @@
 import React from "react";
+import "./Sidebar.css";
 import { motion } from "framer-motion";
 
 export type Section =

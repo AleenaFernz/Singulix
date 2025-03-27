@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import "./Registrations.css";
 
 interface Registration {
   id: string;
@@ -6,20 +7,23 @@ interface Registration {
   name: string;
   email: string;
   date: string;
-  status: "confirmed" | "pending" | "cancelled";
   ticketType: string;
+  status: "confirmed" | "pending" | "cancelled";
 }
 
 const Registrations: React.FC = () => {
-  const [registrations] = useState<Registration[]>([
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  const registrations: Registration[] = [
     {
       id: "1",
       event: "Summer Music Festival",
       name: "John Doe",
       email: "john@example.com",
       date: "2024-07-15",
-      status: "confirmed",
       ticketType: "VIP",
+      status: "confirmed",
     },
     {
       id: "2",
@@ -27,8 +31,8 @@ const Registrations: React.FC = () => {
       name: "Jane Smith",
       email: "jane@example.com",
       date: "2024-08-20",
-      status: "pending",
       ticketType: "Standard",
+      status: "pending",
     },
     {
       id: "3",
@@ -36,114 +40,129 @@ const Registrations: React.FC = () => {
       name: "Mike Johnson",
       email: "mike@example.com",
       date: "2024-09-10",
-      status: "cancelled",
       ticketType: "Premium",
+      status: "cancelled",
     },
-  ]);
+  ];
 
-  const getStatusColor = (status: Registration["status"]) => {
-    switch (status) {
-      case "confirmed":
-        return "bg-green-100 text-green-800";
-      case "pending":
-        return "bg-yellow-100 text-yellow-800";
-      case "cancelled":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase();
+  };
+
+  const getStatusClass = (status: Registration["status"]) => {
+    return `status-${status}`;
+  };
+
+  const handleExport = () => {
+    // Handle export functionality
+    console.log("Exporting data...");
   };
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
-          Event Registrations
-        </h2>
-        <div className="flex gap-4">
-          <input
-            type="text"
-            placeholder="Search registrations..."
-            className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-          />
-          <select className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-            <option value="">All Status</option>
-            <option value="confirmed">Confirmed</option>
-            <option value="pending">Pending</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
-          <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
-            Export
+    <div className="registrations-container">
+      <div className="registrations-header">
+        <div className="header-left">
+          <h2 className="registrations-title">Event Registrations</h2>
+          <div className="header-actions">
+            <input
+              type="text"
+              className="search-input"
+              placeholder="Search registrations..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <select
+              className="filter-select"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <option value="all">All Status</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="pending">Pending</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+            <button className="button export-button">Export</button>
+          </div>
+        </div>
+        <div className="header-right">
+          <button className="header-button notifications-button">
+            <span className="notification-icon">🔔</span>
+            <span className="notification-count">3</span>
           </button>
+          <button className="header-button settings-button">
+            <span className="settings-icon">⚙️</span>
+          </button>
+          <button className="header-button logout-button">Logout</button>
         </div>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          <thead className="bg-gray-50 dark:bg-gray-700">
+      <div className="registrations-table-container">
+        <table className="registrations-table">
+          <thead>
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                Event
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                Name
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                Email
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                Date
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                Ticket Type
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                Status
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                Actions
-              </th>
+              <th>Event</th>
+              <th>Attendee</th>
+              <th>Date</th>
+              <th>Ticket Type</th>
+              <th>Status</th>
+              <th>Actions</th>
             </tr>
           </thead>
-          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+          <tbody>
             {registrations.map((registration) => (
               <tr key={registration.id}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                  {registration.event}
+                <td>{registration.event}</td>
+                <td>
+                  <div className="attendee-info">
+                    <div className="attendee-avatar">
+                      {getInitials(registration.name)}
+                    </div>
+                    <div className="attendee-details">
+                      <div className="attendee-name">{registration.name}</div>
+                      <div className="attendee-email">{registration.email}</div>
+                    </div>
+                  </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                  {registration.name}
+                <td>{registration.date}</td>
+                <td>
+                  <span className="ticket-type">{registration.ticketType}</span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                  {registration.email}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                  {registration.date}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                  {registration.ticketType}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td>
                   <span
-                    className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(
-                      registration.status
-                    )}`}
+                    className={`payment-status status-${registration.status}`}
                   >
                     {registration.status}
                   </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                  <button className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-3">
-                    View
-                  </button>
-                  <button className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">
-                    Cancel
-                  </button>
+                <td>
+                  <div className="action-buttons">
+                    <button className="action-button view-button">View</button>
+                    <button className="action-button edit-button">Edit</button>
+                    <button className="action-button delete-button">
+                      Cancel
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+      </div>
+
+      <div className="pagination">
+        <div className="page-info">Showing 1-3 of 3 registrations</div>
+        <div className="page-buttons">
+          <button className="page-button" disabled>
+            Previous
+          </button>
+          <button className="page-button" disabled>
+            Next
+          </button>
+        </div>
       </div>
     </div>
   );

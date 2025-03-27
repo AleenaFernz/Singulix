@@ -1,8 +1,9 @@
 import React from "react";
+import "./DashboardContent.css";
 
 interface StatCard {
   title: string;
-  value: string | number;
+  value: number | string;
   change: string;
   trend: "up" | "down";
 }
@@ -80,129 +81,89 @@ const DashboardContent: React.FC = () => {
   ];
 
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-6">
-        Dashboard Overview
-      </h2>
+    <div className="dashboard-content">
+      <div className="dashboard-overview">
+        <div className="dashboard-header">
+          <h2 className="welcome-text">Dashboard Overview</h2>
+          <div className="header-actions">
+            <div className="notification-badge">🔔 3</div>
+            <div className="notification-badge">⚙️</div>
+            <button className="notification-badge">Logout</button>
+          </div>
+        </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {stats.map((stat) => (
-          <div
-            key={stat.title}
-            className="bg-white dark:bg-gray-800 rounded-lg shadow p-6"
-          >
-            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
-              {stat.title}
-            </h3>
-            <div className="mt-2 flex items-baseline">
-              <p className="text-2xl font-semibold text-gray-900 dark:text-white">
-                {stat.value}
-              </p>
-              <p
-                className={`ml-2 text-sm font-semibold ${
-                  stat.trend === "up"
-                    ? "text-green-600 dark:text-green-400"
-                    : "text-red-600 dark:text-red-400"
+        <div className="stats-grid">
+          {stats.map((stat, index) => (
+            <div key={stat.title} className="stat-card">
+              <h3 className="stat-title">{stat.title}</h3>
+              <p className="stat-value">{stat.value}</p>
+              <div
+                className={`stat-change ${
+                  stat.trend === "up" ? "positive" : "negative"
                 }`}
               >
                 {stat.change}
-              </p>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
 
-      {/* Recent Activity and Upcoming Events */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Activity */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-          <div className="p-6">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-              Recent Activity
-            </h3>
-            <div className="space-y-4">
+        <div className="content-sections">
+          <div className="section-container">
+            <h3 className="section-title">Recent Activity</h3>
+            <div className="activity-list">
               {recentActivity.map((activity) => (
-                <div
-                  key={activity.id}
-                  className="flex items-start space-x-3 text-sm"
-                >
-                  <div className="flex-shrink-0">
+                <div key={activity.id} className="activity-item">
+                  <div className="activity-icon">
                     {activity.type === "registration" && "👤"}
                     {activity.type === "event" && "📅"}
                     {activity.type === "ticket" && "🎫"}
                   </div>
-                  <div className="flex-1">
-                    <p className="text-gray-900 dark:text-white">
+                  <div className="activity-content">
+                    <p className="activity-title">
                       {activity.type === "registration" && (
                         <>
-                          <span className="font-medium">{activity.user}</span>{" "}
-                          registered for{" "}
-                          <span className="font-medium">{activity.event}</span>
+                          {activity.user} registered for {activity.event}
                         </>
                       )}
                       {activity.type === "event" && (
-                        <>
-                          New event{" "}
-                          <span className="font-medium">{activity.event}</span>{" "}
-                          was {activity.action}
-                        </>
+                        <>New event {activity.event} was created</>
                       )}
                       {activity.type === "ticket" && (
                         <>
-                          <span className="font-medium">{activity.user}</span>{" "}
-                          cancelled ticket for{" "}
-                          <span className="font-medium">{activity.event}</span>
+                          {activity.user} cancelled ticket for {activity.event}
                         </>
                       )}
                     </p>
-                    <p className="text-gray-500 dark:text-gray-400">
-                      {activity.time}
-                    </p>
+                    <p className="activity-time">{activity.time}</p>
                   </div>
                 </div>
               ))}
             </div>
           </div>
-        </div>
 
-        {/* Upcoming Events */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-          <div className="p-6">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-              Upcoming Events
-            </h3>
-            <div className="space-y-4">
+          <div className="section-container">
+            <h3 className="section-title">Upcoming Events</h3>
+            <div className="upcoming-events">
               {upcomingEvents.map((event) => (
-                <div
-                  key={event.id}
-                  className="border-b border-gray-200 dark:border-gray-700 pb-4 last:border-0"
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h4 className="font-medium text-gray-900 dark:text-white">
-                        {event.name}
-                      </h4>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {event.date} • {event.venue}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        {event.registrations}/{event.capacity}
-                      </p>
-                      <div className="w-24 h-2 bg-gray-200 dark:bg-gray-700 rounded-full mt-1">
-                        <div
-                          className="h-full bg-blue-600 rounded-full"
-                          style={{
-                            width: `${
-                              (event.registrations / event.capacity) * 100
-                            }%`,
-                          }}
-                        />
-                      </div>
-                    </div>
+                <div key={event.id} className="event-card">
+                  <h4 className="event-name">{event.name}</h4>
+                  <p className="event-details">
+                    {event.date} • {event.venue}
+                  </p>
+                  <div className="capacity-bar">
+                    <div
+                      className="capacity-fill"
+                      style={{
+                        width: `${
+                          (event.registrations / event.capacity) * 100
+                        }%`,
+                      }}
+                    />
                   </div>
+                  <p className="event-details">
+                    {event.registrations}/{event.capacity}
+                  </p>
                 </div>
               ))}
             </div>

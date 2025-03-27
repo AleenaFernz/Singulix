@@ -1,8 +1,7 @@
-import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import Sidebar, { Section } from "./Sidebar";
-import Header from "./Header";
-import DashboardContent from "./DashboardContent";
+import React from "react";
+import { Routes, Route } from "react-router-dom";
+import HamburgerMenu from "./HamburgerMenu";
+import Overview from "./Overview";
 import CreateEvent from "./CreateEvent";
 import ManageEvents from "./ManageEvents";
 import Registrations from "./Registrations";
@@ -11,59 +10,20 @@ import EmailNotifications from "./EmailNotifications";
 import "./AdminDashboard.css";
 
 const AdminDashboard: React.FC = () => {
-  const [currentSection, setCurrentSection] = useState<Section>("overview");
-  const [isUserMode, setIsUserMode] = useState(false);
-
-  const handleSectionChange = (section: Section) => {
-    setCurrentSection(section);
-  };
-
-  const handleModeToggle = () => {
-    setIsUserMode(!isUserMode);
-  };
-
-  const renderContent = () => {
-    switch (currentSection) {
-      case "overview":
-        return <DashboardContent />;
-      case "create-event":
-        return <CreateEvent />;
-      case "manage-events":
-        return <ManageEvents />;
-      case "registrations":
-        return <Registrations />;
-      case "monitoring":
-        return <RealTimeMonitoring />;
-      case "notifications":
-        return <EmailNotifications />;
-      default:
-        return <DashboardContent />;
-    }
-  };
-
   return (
     <div className="admin-dashboard">
-      <Sidebar
-        currentSection={currentSection}
-        onSectionChange={handleSectionChange}
-        isUserMode={isUserMode}
-        onModeToggle={handleModeToggle}
-      />
-      <div className="main-content-wrapper">
-        <Header />
-        <AnimatePresence mode="wait">
-          <motion.main
-            key={currentSection}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
-            className="main-content"
-          >
-            {renderContent()}
-          </motion.main>
-        </AnimatePresence>
-      </div>
+      <HamburgerMenu />
+
+      <main className="dashboard-content">
+        <Routes>
+          <Route path="overview" element={<Overview />} />
+          <Route path="create-event" element={<CreateEvent />} />
+          <Route path="manage-events" element={<ManageEvents />} />
+          <Route path="registrations" element={<Registrations />} />
+          <Route path="monitoring" element={<RealTimeMonitoring />} />
+          <Route path="notifications" element={<EmailNotifications />} />
+        </Routes>
+      </main>
     </div>
   );
 };

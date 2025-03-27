@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import "./CreateEvent.css";
 
 interface EventFormData {
   name: string;
@@ -93,147 +94,132 @@ const CreateEvent: React.FC = () => {
   };
 
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-6">
-        Create New Event
-      </h2>
+    <div className="create-event-container">
+      <div className="create-event-header">
+        <h2 className="create-event-title">Create New Event</h2>
+      </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label
-              htmlFor="name"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              Event Name
-            </label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              required
-              value={formData.name}
-              onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-            />
+      <form className="create-event-form" onSubmit={handleSubmit}>
+        <div className="form-section">
+          <div className="form-grid">
+            <div className="form-group">
+              <label className="form-label" htmlFor="name">
+                Event Name
+              </label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                required
+                value={formData.name}
+                onChange={handleChange}
+                className="form-input"
+                placeholder="Enter event name"
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label" htmlFor="venue">
+                Venue
+              </label>
+              <input
+                type="text"
+                id="venue"
+                name="venue"
+                required
+                value={formData.venue}
+                onChange={handleChange}
+                className="form-input"
+                placeholder="Enter venue"
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label" htmlFor="date">
+                Date
+              </label>
+              <input
+                type="date"
+                id="date"
+                name="date"
+                required
+                value={formData.date}
+                onChange={handleChange}
+                className="form-input"
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label" htmlFor="time">
+                Time
+              </label>
+              <input
+                type="time"
+                id="time"
+                name="time"
+                required
+                value={formData.time}
+                onChange={handleChange}
+                className="form-input"
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label" htmlFor="capacity">
+                Capacity
+              </label>
+              <input
+                type="number"
+                id="capacity"
+                name="capacity"
+                required
+                min="1"
+                value={formData.capacity}
+                onChange={handleChange}
+                className="form-input"
+                placeholder="Enter maximum capacity"
+              />
+            </div>
           </div>
 
-          <div>
-            <label
-              htmlFor="venue"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              Venue
+          <div className="form-group full-width">
+            <label className="form-label" htmlFor="description">
+              Description
             </label>
-            <input
-              type="text"
-              id="venue"
-              name="venue"
+            <textarea
+              id="description"
+              name="description"
               required
-              value={formData.venue}
+              rows={4}
+              value={formData.description}
               onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="date"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              Date
-            </label>
-            <input
-              type="date"
-              id="date"
-              name="date"
-              required
-              value={formData.date}
-              onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="time"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              Time
-            </label>
-            <input
-              type="time"
-              id="time"
-              name="time"
-              required
-              value={formData.time}
-              onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="capacity"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              Capacity
-            </label>
-            <input
-              type="number"
-              id="capacity"
-              name="capacity"
-              required
-              min="1"
-              value={formData.capacity}
-              onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              className="form-input form-textarea"
+              placeholder="Enter event description"
             />
           </div>
         </div>
 
-        <div>
-          <label
-            htmlFor="description"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-          >
-            Description
-          </label>
-          <textarea
-            id="description"
-            name="description"
-            required
-            rows={4}
-            value={formData.description}
-            onChange={handleChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-          />
-        </div>
-
-        <div>
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-              Ticket Types
-            </h3>
-            <button
-              type="button"
-              onClick={addTicketType}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              Add Ticket Type
-            </button>
-          </div>
-
-          <div className="space-y-4">
-            {formData.ticketTypes.map((ticket, index) => (
-              <div
-                key={index}
-                className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg"
-              >
-                <div>
+        <div className="ticket-types">
+          <div className="section-title">Ticket Types</div>
+          {formData.ticketTypes.map((ticket, index) => (
+            <div key={index} className="ticket-type">
+              <div className="ticket-type-header">
+                <h4 className="ticket-type-title">Ticket Type {index + 1}</h4>
+                {formData.ticketTypes.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeTicketType(index)}
+                    className="remove-ticket"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+              <div className="form-grid">
+                <div className="form-group">
                   <label
+                    className="form-label"
                     htmlFor={`ticket-name-${index}`}
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
                     Name
                   </label>
@@ -244,14 +230,15 @@ const CreateEvent: React.FC = () => {
                     onChange={(e) =>
                       handleTicketTypeChange(index, "name", e.target.value)
                     }
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    className="form-input"
+                    placeholder="Enter ticket type name"
                   />
                 </div>
 
-                <div>
+                <div className="form-group">
                   <label
+                    className="form-label"
                     htmlFor={`ticket-price-${index}`}
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
                     Price
                   </label>
@@ -268,69 +255,58 @@ const CreateEvent: React.FC = () => {
                         parseFloat(e.target.value)
                       )
                     }
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    className="form-input"
+                    placeholder="Enter ticket price"
                   />
                 </div>
 
-                <div className="flex items-end space-x-4">
-                  <div className="flex-1">
-                    <label
-                      htmlFor={`ticket-quantity-${index}`}
-                      className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                    >
-                      Quantity
-                    </label>
-                    <input
-                      type="number"
-                      id={`ticket-quantity-${index}`}
-                      min="0"
-                      value={ticket.quantity}
-                      onChange={(e) =>
-                        handleTicketTypeChange(
-                          index,
-                          "quantity",
-                          parseInt(e.target.value)
-                        )
-                      }
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                    />
-                  </div>
-                  {formData.ticketTypes.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => removeTicketType(index)}
-                      className="px-3 py-2 text-sm font-medium text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
-                    >
-                      Remove
-                    </button>
-                  )}
+                <div className="form-group">
+                  <label
+                    className="form-label"
+                    htmlFor={`ticket-quantity-${index}`}
+                  >
+                    Quantity
+                  </label>
+                  <input
+                    type="number"
+                    id={`ticket-quantity-${index}`}
+                    min="0"
+                    value={ticket.quantity}
+                    onChange={(e) =>
+                      handleTicketTypeChange(
+                        index,
+                        "quantity",
+                        parseInt(e.target.value)
+                      )
+                    }
+                    className="form-input"
+                    placeholder="Enter quantity available"
+                  />
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
+          <button type="button" onClick={addTicketType} className="add-ticket">
+            + Add Ticket Type
+          </button>
         </div>
 
-        {error && (
-          <div className="rounded-md bg-red-50 dark:bg-red-900 p-4">
-            <div className="text-sm text-red-700 dark:text-red-200">
-              {error}
-            </div>
-          </div>
-        )}
+        {error && <div className="alert error">{error}</div>}
 
-        {success && (
-          <div className="rounded-md bg-green-50 dark:bg-green-900 p-4">
-            <div className="text-sm text-green-700 dark:text-green-200">
-              {success}
-            </div>
-          </div>
-        )}
+        {success && <div className="alert success">{success}</div>}
 
-        <div className="flex justify-end">
+        <div className="form-actions">
+          <button
+            type="button"
+            className="button cancel-button"
+            onClick={() => window.history.back()}
+          >
+            Cancel
+          </button>
           <button
             type="submit"
             disabled={isLoading}
-            className="px-6 py-3 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+            className="button create-button"
           >
             {isLoading ? "Creating Event..." : "Create Event"}
           </button>
