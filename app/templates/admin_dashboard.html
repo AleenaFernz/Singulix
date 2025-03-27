@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Dashboard - Singulix</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background-color: #007bff;
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.2s;
+        }
+        .button-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        .button-primary:hover {
+            background-color: #0056b3;
+        }
+        .button-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        .button-secondary:hover {
+            background-color: #545b62;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #666;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+        .ticket-types {
+            margin-top: 1rem;
+        }
+        .ticket-type {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        #message {
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .events-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        .event-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+        }
+        .event-status {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .status-approved {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status-rejected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Admin Dashboard</h1>
+        <div>
+            <span id="userEmail"></span>
+            <button class="button button-secondary" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <h2>Create New Event</h2>
+            <form id="createEventForm" onsubmit="handleCreateEvent(event)">
+                <div class="form-group">
+                    <label for="name">Event Name</label>
+                    <input type="text" id="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea id="description" rows="3" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="venue">Venue</label>
+                    <input type="text" id="venue" required>
+                </div>
+                <div class="form-group">
+                    <label for="date">Date</label>
+                    <input type="date" id="date" required>
+                </div>
+                <div class="form-group">
+                    <label for="time">Time</label>
+                    <input type="time" id="time" required>
+                </div>
+                <div class="form-group">
+                    <label for="capacity">Capacity</label>
+                    <input type="number" id="capacity" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label>Ticket Types</label>
+                    <div id="ticketTypes" class="ticket-types">
+                        <div class="ticket-type">
+                            <input type="text" placeholder="Ticket Name" required>
+                            <input type="number" placeholder="Price" min="0" step="0.01" required>
+                            <input type="number" placeholder="Quantity" min="1" required>
+                            <button type="button" class="button button-secondary" onclick="removeTicketType(this)">Remove</button>
+                        </div>
+                    </div>
+                    <button type="button" class="button button-secondary" onclick="addTicketType()">Add Ticket Type</button>
+                </div>
+                <button type="submit" class="button button-primary">Create Event</button>
+            </form>
+            <div id="message"></div>
+        </div>
+
+        <div class="card">
+            <h2>My Events</h2>
+            <div id="eventsList" class="events-list">
+                Loading events...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Check authentication on page load
+        window.onload = function() {
+            const token = localStorage.getItem('token');
+            const userRole = localStorage.getItem('user_role');
+            const userEmail = localStorage.getItem('user_email');
+            
+            if (!token || userRole !== 'admin') {
+                window.location.href = '/auth/login';
+                return;
+            }
+            
+            document.getElementById('userEmail').textContent = userEmail;
+            fetchEvents();
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user_role');
+            localStorage.removeItem('user_email');
+            window.location.href = '/auth/login';
+        }
+
+        function addTicketType() {
+            const ticketTypes = document.getElementById('ticketTypes');
+            const newType = document.createElement('div');
+            newType.className = 'ticket-type';
+            newType.innerHTML = `
+                <input type="text" placeholder="Ticket Name" required>
+                <input type="number" placeholder="Price" min="0" step="0.01" required>
+                <input type="number" placeholder="Quantity" min="1" required>
+                <button type="button" class="button button-secondary" onclick="removeTicketType(this)">Remove</button>
+            `;
+            ticketTypes.appendChild(newType);
+        }
+
+        function removeTicketType(button) {
+            button.parentElement.remove();
+        }
+
+        async function handleCreateEvent(event) {
+            event.preventDefault();
+            const messageDiv = document.getElementById('message');
+            
+            try {
+                const ticketTypes = Array.from(document.querySelectorAll('.ticket-type')).map(type => ({
+                    name: type.children[0].value,
+                    price: parseFloat(type.children[1].value),
+                    quantity: parseInt(type.children[2].value)
+                }));
+
+                const eventData = {
+                    name: document.getElementById('name').value,
+                    description: document.getElementById('description').value,
+                    venue: document.getElementById('venue').value,
+                    date: document.getElementById('date').value,
+                    time: document.getElementById('time').value,
+                    capacity: parseInt(document.getElementById('capacity').value),
+                    ticket_types: ticketTypes
+                };
+
+                const response = await fetch('/events/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify(eventData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    messageDiv.className = 'success';
+                    messageDiv.textContent = data.message;
+                    document.getElementById('createEventForm').reset();
+                    fetchEvents();  // Refresh events list
+                } else {
+                    messageDiv.className = 'error';
+                    messageDiv.textContent = data.detail || 'Failed to create event';
+                }
+            } catch (error) {
+                messageDiv.className = 'error';
+                messageDiv.textContent = 'An error occurred. Please try again.';
+            }
+        }
+
+        async function fetchEvents() {
+            try {
+                const response = await fetch('/events/my-events', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    const eventsList = document.getElementById('eventsList');
+                    if (data.events.length === 0) {
+                        eventsList.innerHTML = '<p>No events found</p>';
+                        return;
+                    }
+
+                    eventsList.innerHTML = data.events.map(event => `
+                        <div class="event-card">
+                            <div class="event-status status-${event.status}">${event.status}</div>
+                            <h3>${event.name}</h3>
+                            <p>${event.description}</p>
+                            <p><strong>Venue:</strong> ${event.venue}</p>
+                            <p><strong>Date:</strong> ${event.date}</p>
+                            <p><strong>Time:</strong> ${event.time}</p>
+                            <p><strong>Capacity:</strong> ${event.capacity}</p>
+                        </div>
+                    `).join('');
+                } else {
+                    throw new Error(data.detail || 'Failed to fetch events');
+                }
+            } catch (error) {
+                document.getElementById('eventsList').innerHTML = `
+                    <p style="color: #721c24">Error loading events: ${error.message}</p>
+                `;
+            }
+        }
+    </script>
+</body>
+</html> 

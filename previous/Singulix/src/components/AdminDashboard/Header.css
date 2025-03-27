@@ -1,0 +1,71 @@
+.header {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: end;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(20px);
+  padding: 0 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 900;
+  width: 100%;
+}
+
+/* Welcome text alignment */
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: white;
+  padding-left: 1rem;
+
+}
+
+/* Actions container */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 3rem;
+  padding-right: 2rem;
+  width: 1500px;
+  /* border: red solid 10px; */
+}
+
+/* Button styles */
+.button {
+  display: flex;
+  align-items: center;
+  gap: 5rem;
+  padding: 0.6rem 1rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: 0.2s ease-in-out;
+}
+
+/* Secondary buttons */
+.button-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.button-secondary:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Primary button (Logout) */
+.button-primary {
+  background: #ff3b30;
+  color: white;
+}
+
+.button-primary:hover {
+  background: #d8342a;
+}

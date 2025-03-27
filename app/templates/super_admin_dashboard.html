@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Super Admin Dashboard - Singulix</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background-color: #007bff;
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.2s;
+        }
+        .button-primary {
+            background-color: #28a745;
+            color: white;
+        }
+        .button-primary:hover {
+            background-color: #218838;
+        }
+        .button-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        .button-secondary:hover {
+            background-color: #545b62;
+        }
+        .button-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+        .button-danger:hover {
+            background-color: #c82333;
+        }
+        .events-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        .event-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+        }
+        .event-status {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .status-approved {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status-rejected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 500px;
+        }
+        .close {
+            float: right;
+            cursor: pointer;
+            font-size: 1.5rem;
+        }
+        .close:hover {
+            color: #666;
+        }
+        #message {
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Super Admin Dashboard</h1>
+        <div>
+            <span id="userEmail"></span>
+            <button class="button button-secondary" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div id="message"></div>
+        
+        <div class="card">
+            <h2>Pending Events</h2>
+            <div id="pendingEvents" class="events-list">
+                Loading events...
+            </div>
+        </div>
+    </div>
+
+    <!-- Reject Modal -->
+    <div id="rejectModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeRejectModal()">&times;</span>
+            <h2>Reject Event</h2>
+            <p>Please provide a reason for rejection:</p>
+            <textarea id="rejectReason" rows="4" style="width: 100%; margin-bottom: 1rem;"></textarea>
+            <button class="button button-danger" onclick="confirmReject()">Confirm Rejection</button>
+        </div>
+    </div>
+
+    <script>
+        let currentEventId = null;
+
+        // Check authentication on page load
+        window.onload = function() {
+            const token = localStorage.getItem('token');
+            const userRole = localStorage.getItem('user_role');
+            const userEmail = localStorage.getItem('user_email');
+            
+            if (!token || userRole !== 'super_admin') {
+                window.location.href = '/auth/login';
+                return;
+            }
+            
+            document.getElementById('userEmail').textContent = userEmail;
+            fetchPendingEvents();
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user_role');
+            localStorage.removeItem('user_email');
+            window.location.href = '/auth/login';
+        }
+
+        async function fetchPendingEvents() {
+            try {
+                const response = await fetch('/events/pending-approvals', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    const eventsList = document.getElementById('pendingEvents');
+                    if (!data.events || data.events.length === 0) {
+                        eventsList.innerHTML = '<p>No pending events</p>';
+                        return;
+                    }
+
+                    eventsList.innerHTML = data.events.map(event => `
+                        <div class="event-card">
+                            <div class="event-status status-pending">Pending</div>
+                            <h3>${event.name}</h3>
+                            <p>${event.description}</p>
+                            <p><strong>Venue:</strong> ${event.venue}</p>
+                            <p><strong>Date:</strong> ${event.date}</p>
+                            <p><strong>Time:</strong> ${event.time}</p>
+                            <p><strong>Capacity:</strong> ${event.capacity}</p>
+                            <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                                <button class="button button-primary" onclick="approveEvent('${event.id}')">Approve</button>
+                                <button class="button button-danger" onclick="showRejectModal('${event.id}')">Reject</button>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    showMessage(data.detail || 'Failed to fetch events', true);
+                }
+            } catch (error) {
+                showMessage('Error loading events', true);
+            }
+        }
+
+        async function approveEvent(eventId) {
+            try {
+                const response = await fetch(`/events/approve/${eventId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage('Event approved successfully');
+                    fetchPendingEvents();
+                } else {
+                    showMessage(data.detail || 'Failed to approve event', true);
+                }
+            } catch (error) {
+                showMessage('Error approving event', true);
+            }
+        }
+
+        function showRejectModal(eventId) {
+            currentEventId = eventId;
+            document.getElementById('rejectModal').style.display = 'block';
+            document.getElementById('rejectReason').value = '';
+        }
+
+        function closeRejectModal() {
+            document.getElementById('rejectModal').style.display = 'none';
+            currentEventId = null;
+        }
+
+        async function confirmReject() {
+            if (!currentEventId) return;
+
+            const reason = document.getElementById('rejectReason').value.trim();
+            if (!reason) {
+                showMessage('Please provide a reason for rejection', true);
+                return;
+            }
+
+            try {
+                const response = await fetch(`/events/reject/${currentEventId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ reason })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    closeRejectModal();
+                    showMessage('Event rejected successfully');
+                    fetchPendingEvents();
+                } else {
+                    showMessage(data.detail || 'Failed to reject event', true);
+                }
+            } catch (error) {
+                showMessage('Error rejecting event', true);
+            }
+        }
+
+        function showMessage(message, isError = false) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = message;
+            messageDiv.className = isError ? 'error' : 'success';
+            messageDiv.style.display = 'block';
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html> 
+</html> 
